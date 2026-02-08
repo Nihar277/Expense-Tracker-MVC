@@ -1,0 +1,219 @@
+@{
+    ViewData["Title"] = "User Dashboard";
+    Layout = "../Shared/_UserLayout.cshtml";
+}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+<div class="container-fluid">
+
+    <!-- Header Row: Title + Buttons in One Line -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+        <h2 id="username" style="margin: 0; color:green;"></h2>
+        <div>
+            <a href="/User/Edit" class="btn btn-outline-primary me-2">
+                <i class="bi bi-person-lines-fill me-1"></i> Update Profile
+            </a>
+            <a class="btn btn-outline-danger" asp-controller="ChangePassword" asp-action="ChangePassword">
+                <i class="bi bi-key me-1"></i> Change Password
+            </a>
+        </div>
+    </div>
+
+    <!-- Expense Summary Cards -->
+    <div class="row justify-content-center mb-4">
+        <!-- Total Expense Card -->
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 rounded-4 text-white"
+                style="background: linear-gradient(135deg, #0d6efd, #0a58ca);">
+                <div class="card-body text-center py-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title fw-semibold mb-0">
+                            <i class="k-icon"></i> Total Expense
+                        </h5>
+                    </div>
+                    <h2 id="totalExpense" class="display-6 fw-bold mt-2">₹ 0</h2>
+                    <p class="text-light opacity-75 mt-2 mb-0">&nbsp;</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Expense Card -->
+        <div class="col-md-4 mt-34 mx-2">
+            <div class="card shadow-lg border-0 rounded-4 text-white"
+                style="background: linear-gradient(135deg, #198754, #157347);">
+                <div class="card-body text-center py-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title fw-semibold mb-0">
+                            <i class="bi bi-robot"></i> Expected Expense
+                        </h5>
+                    </div>
+                    <h2 id="predictedExpense" class="display-6 fw-bold mt-2">₹ --</h2>
+                    <p class="text-light opacity-75 mt-2 mb-0">Predicted for this Month</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center mb-4">
+        <a class="btn btn-success btn-lg mx-4 px-4" asp-controller="Expense"
+                                asp-action="addExpense">
+            <i class="bi bi-plus-circle me-2"></i> Add Expense
+        </a>
+        <a class="btn btn-outline-primary btn-lg mx-2 px-4" asp-controller="Expense"
+                                asp-action="Index">
+            <i class="bi bi-eye me-2"></i> View Expenses
+        </a>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row justify-content-center g-4">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 rounded-4 p-3">
+                <h5 class="text-center text-secondary mb-3">Expense Distribution</h5>
+                <div id="donut-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 rounded-4 p-3">
+                <h5 class="text-center text-secondary mb-3">Monthly Expense Summary</h5>
+                <div id="bar-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+    <script src="https://kendo.cdn.telerik.com/2022.1.119/js/jquery.min.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2022.1.119/js/kendo.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.js"></script>
+
+    <script>
+        debugger;
+        $(document).ready(function () {
+
+            var userId = JSON.parse(sessionStorage.getItem("UserData")).userID;
+
+            var user = JSON.parse(sessionStorage.getItem("UserData"));
+            console.log(user);
+            if (user && user.name) {
+                $("#username").text("Welcome, " + user.name);
+            } else {
+                $("#username").text("Welcome, Guest");
+            }
+            // Fetch Total Expense
+            $.ajax({
+                type: "GET",
+                url: "/User/getUserGraph/" + userId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    const total = data.reduce((sum, item) => sum + item.amount, 0);
+                    $("#totalExpense").text("₹ " + total.toLocaleString('en-IN'));
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+
+            // AVG logic calling
+            $.ajax({
+                type: "GET",
+                url: "/User/GetPredictedExpense/" + userId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    const predicted = data.predictedExpense || 0;
+                    $("#predictedExpense").text("₹ " + predicted.toLocaleString('en-IN'));
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+
+
+            // Donut Chart (Expense Distribution)
+            $.ajax({
+                type: "GET",
+                url: "/User/getUserGraph/" + userId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    $("#donut-chart").kendoChart({
+                        title: {
+                            text: "",
+                        },
+                        legend: {
+                            position: "bottom"
+                        },
+                        seriesDefaults: {
+                            type: "donut",
+                            startAngle: 150
+                        },
+                        series: [{
+                            data: data.map(item => ({
+                                category: item.category,
+                                value: item.amount
+                            })),
+                            labels: {
+                                visible: true,
+                                position: "outsideEnd",
+                                background: "transparent",
+                                template: "#= category #: ₹#= value.toLocaleString('en-IN') #"
+                            }
+                        }],
+                        tooltip: {
+                            visible: true,
+                            template: "#= category #: ₹#= value.toLocaleString('en-IN') #"
+                        }
+                    });
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+
+            // Bar Chart (Monthly Expense)
+            $.ajax({
+                type: "GET",
+                url: "/User/getAllTransactionByMonth/" + userId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    $("#bar-chart").kendoChart({
+                        legend: { visible: false },
+                        dataSource: { data: data },
+                        series: [{
+                            type: "column",
+                            field: "amount",
+                            categoryField: "month",
+                            name: "Total Expense",
+                            color: "#198754"
+                        }],
+                        valueAxis: {
+                            labels: { format: "₹{0:n0}" },
+                            title: { text: "Expense Amount (₹)" },
+                            line: { visible: false }
+                        },
+                        categoryAxis: {
+                            title: { text: "Month" },
+                            labels: { rotation: -45 },
+                            majorGridLines: { visible: false }
+                        },
+                        tooltip: {
+                            visible: true,
+                            template: "#= category #: ₹#= value.toLocaleString('en-IN') #"
+                        }
+                    });
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+        });
+    </script>
+}

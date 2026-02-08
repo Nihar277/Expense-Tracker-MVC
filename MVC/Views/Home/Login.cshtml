@@ -1,0 +1,183 @@
+@{
+    Layout = "../Shared/_LoginLayout.cshtml";
+}
+@model MVC.Models.vm_Login
+
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        /* Prevent scrolling */
+    }
+
+    .login-wrapper {
+        display: flex;
+        height: 100vh;
+        /* full viewport height */
+        width: 100%;
+    }
+
+    .login-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem;
+
+        color: rgb(66, 42, 42);
+        overflow: hidden;
+        /* prevent internal scroll */
+    }
+
+    @* .login-leftt {
+
+        background: linear-gradient(135deg, #b4daa7 0%, #4caf50 100%);
+
+
+    } *@
+
+    .login-left img {
+        max-width: 70%;
+        height: auto;
+    }
+
+    .login-right {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        @* background-color: white; *@
+        overflow: hidden;
+        padding: 3rem;
+    }
+
+    .login-right .card {
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid rgb(27, 196, 126);
+        border-radius: 15px ;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="login-wrapper  login-leftt ">
+    <!-- Left Side -->
+    <div class="login-left">
+     <img src="~/cashpoint_finallogo-removebg-preview.png" alt="Finance Illustration" class="img-fluid">
+        <h1 class="display-4 fw-bold mb-3 text-center">Welcome to CashPoint</h1>
+        <p class="lead mb-3  text-center" style="color: rgb(66, 42, 42);">
+            Manage your expenses efficiently, track your spending, and get insights at your fingertips.
+        </p>
+       
+    </div>
+        <!-- Right Side -->
+        <div class="login-right">
+            <div class="card shadow-lg" >
+                <div class="card-header bg-success text-white text-center">
+                    <h2 class="mb-0">Login</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div id="notification"></div>
+                    <form asp-action="Login" method="post" enctype="multipart/form-data">
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">User Email:</label>
+                            <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">Password:</label>
+                            <input asp-for="Password" type="password" class="form-control"
+                                placeholder="Enter your password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <button id="sub" class="btn btn-success w-100" type="submit">Login</button>
+                    </form>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="text-muted mb-0">Don't have an account?
+                        <a href='@Url.Action("Register", "User")'
+                            class="fw-bold text-decoration-none text-success">Register</a>
+                    </p>
+                </div>
+            </div>
+       
+    </div>
+
+</div>
+
+@section scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            var notification = $("#notification").kendoNotification({
+                position: { pinned: true, top: 30, right: 30 },
+                autoHideAfter: 3000,
+                stacking: "down",
+                templates: [
+                    { type: "success", template: "<div class='k-notification-success'>#= message #</div>" },
+                    { type: "error", template: "<div class='k-notification-error'>#= message #</div>" }
+                ]
+            }).data("kendoNotification");
+
+            $("#sub").click(function (e) {
+                e.preventDefault();
+                if (!$("form").valid()) return;
+                var formData = new FormData($("form")[0]);
+
+                $.ajax({
+                    url: '@Url.Action("Login", "Home")',
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            notification.show({ message: res.message }, "success");
+                            Swal.fire({
+                                title: 'Login Successful',
+                                text: res.message || 'Welcome back!',
+                                icon: 'success',
+                                iconColor: '#00ff88',
+                                confirmButtonColor: '#444'
+                            });
+                            sessionStorage.setItem("UserData", JSON.stringify(res.userdata));
+                            setTimeout(function () {
+                                let user = JSON.parse(sessionStorage.getItem("UserData"));
+                                if (user.role === "admin")
+                                    window.location.href = '@Url.Action("Index", "Admin")';
+                                else
+                                    window.location.href = '@Url.Action("UserGraph", "User")';
+                            }, 2000);
+                        } else {
+                            notification.show({ message: res.message || "Login Failed" }, "error");
+                            Swal.fire({
+                                title: 'Login Failed',
+                                text: res.message || 'Invalid Email or Password.',
+                                icon: 'error',
+                                iconColor: '#ff4d4d',
+                                confirmButtonColor: '#444'
+                            });
+                        }
+                    },
+                    error: function () {
+                        notification.show({ message: "Something went wrong" }, "error");
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Something went wrong. Please try again.',
+                            icon: 'error',
+                            iconColor: '#ff4d4d',
+                            confirmButtonColor: '#444'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

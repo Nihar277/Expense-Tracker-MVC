@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CashPoint Admin</title>
+
+    <!-- Bootstrap & Kendo CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/kendo/kendo.default-v2.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            padding: 0.6rem 1rem;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            color: #6e7f91 !important;
+            font-size: 1.2rem;
+        }
+
+        .navbar-brand img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+            margin-right: 8px;
+        }
+
+        .navbar-nav .nav-link {
+            color: #34495E !important;
+            font-weight: 500;
+            margin: 0 6px;
+            transition: color 0.2s;
+        }
+
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: #16A085 !important;
+        }
+
+        .nav-link.text-danger:hover {
+            color: #E74C3C !important;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #2C3E50;
+        }
+
+        .kpi-label {
+            font-size: 1rem;
+            color: #d6e4e6;
+            @* font-weight: 100px; *@
+        }
+
+        /* Charts & Grid */
+        .chart-card,
+        #userGrid {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            padding: 12px 0;
+        }
+
+        .footer .text-muted {
+            color: #95A5A6 !important;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-controller="AdminGraph" asp-action="Dashboard">
+                <img src="~/cashpoint_finallogo-removebg-preview.png" alt="CashPoint Logo" />
+                @* <span>CASHPOINT</span> *@
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminGraph" ? "active" : "")"
+                            asp-controller="AdminGraph" asp-action="Dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")"
+                            asp-controller="Admin" asp-action="Index">Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "active" : "")"
+                            asp-controller="Report" asp-action="Index">Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" asp-controller="Home" asp-action="LogOut">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container text-center text-muted">
+            &copy; @DateTime.Now.Year CashPoint | All Rights Reserved
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/kendo/kendo.all.min.js"></script>
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

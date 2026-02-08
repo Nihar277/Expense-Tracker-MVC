@@ -1,0 +1,262 @@
+@{
+    ViewData["Title"] = "Admin Panel";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Expense Tracker</title>
+
+    <link href="https://kendo.cdn.telerik.com/themes/12.0.1/default/default-main.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="~/lib/kendo/kendo.all.min.js"></script>
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            color: #2E2E2E;
+        }
+
+        .dashboard-header {
+            padding: 20px 30px;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px 30px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-card {
+            flex: 1 1 200px;
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+            padding: 20px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            opacity: 0.5;
+            color: black
+        }
+
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+
+        /* Color themes */
+        .green-card {
+            background: linear-gradient(135deg, #2ECC71, #27AE60);
+        }
+
+        .red-card {
+            background: linear-gradient(135deg, #E74C3C, #C0392B);
+        }
+
+        .blue-card {
+            background: linear-gradient(135deg, #3498DB, #2980B9);
+        }
+
+        .gray-card {
+            background: linear-gradient(135deg, #95A5A6, #7F8C8D);
+        }
+
+        .dashboard-container {
+            padding: 0 30px 30px;
+        }
+
+        .chart-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .chart-card {
+            flex: 1 1 45%;
+            min-width: 300px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        h2.chart-title {
+            margin: 0 0 15px;
+            font-size: 1.1rem;
+            border-left: 5px solid #2ECC71;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="dashboard-header">Admin Dashboard - Expense Tracker</div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-container">
+            <div id="total-users" class="kpi-card blue-card">
+                <div class="kpi-label">Total Users</div>
+                <div class="kpi-value">0</div>
+            </div>
+
+            <div id="active-users" class="kpi-card green-card">
+                <div class="kpi-label">Active Users</div>
+                <div class="kpi-value">0</div>
+            </div>
+
+            <div id="inactive-users" class="kpi-card red-card">
+                <div class="kpi-label">Inactive Users</div>
+                <div class="kpi-value">0</div>
+            </div>
+
+            <div id="top-spender" class="kpi-card gray-card">
+                <div class="kpi-label">Highest Spending User</div>
+                <div class="kpi-value">₹0</div>
+            </div>
+
+            <div id="monthly-expense" class="kpi-card gray-card">
+                <div class="kpi-label">Total Monthly Expense</div>
+                <div class="kpi-value">₹0</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="dashboard-container">
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h2 class="chart-title">Expense by Category</h2>
+                    <div id="chart-category" style="height:400px;"></div>
+                </div>
+                <div class="chart-card">
+                    <h2 class="chart-title">Monthly Expense Trend</h2>
+                    <div id="chart-monthly" style="height:400px;"></div>
+                </div>
+                <div class="chart-card">
+                    <h2 class="chart-title">Payment Mode Summary</h2>
+                    <div id="chart-payment" style="height:400px;"></div>
+                </div>
+                <div class="chart-card">
+                    <h2 class="chart-title">Top 5 Spending Users</h2>
+                    <div id="chart-users" style="height:400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            loadKPIs();
+            loadCategoryChart();
+            loadMonthlyTrend();
+            loadPaymentSummary();
+            loadTopUsers();
+
+            function loadKPIs() {
+                // ✅ Total Users
+                $.getJSON("/AdminGraph/TotalUserCount", function (data) {
+                    $("#total-users .kpi-value").text(data);
+                });
+
+                // ✅ Active Users
+                $.getJSON("/AdminGraph/UserCountSummary", function (data) {
+                    $("#active-users .kpi-value").text(data);
+                });
+
+                // ✅ Inactive Users
+                $.getJSON("/AdminGraph/InactiveUserCount", function (data) {
+                    $("#inactive-users .kpi-value").text(data);
+                });
+
+                // ✅ Highest Spending User
+                $.getJSON("/AdminGraph/TopSpendingUsers", function (data) {
+                    if (!data?.length) return;
+                    let top = data.reduce((max, d) => d.totalSpent > max.totalSpent ? d : max, data[0]);
+                    $("#top-spender .kpi-value").text(`₹${top.totalSpent} (${top.name})`);
+                });
+
+                // ✅ Total Monthly Expense
+                $.getJSON("/AdminGraph/MonthlyExpenseTrend", function (data) {
+                    if (!data?.length) return;
+                    let total = data.reduce((sum, d) => sum + (d.totalAmount || 0), 0);
+                    $("#monthly-expense .kpi-value").text("₹" + total.toFixed(2));
+                });
+            }
+
+            // --- Existing chart functions ---
+            function loadCategoryChart() {
+                $.getJSON("/AdminGraph/ExpenseSummary", function (data) {
+                    if (!data?.length) return;
+                    let chartData = data.map(d => ({
+                        category: d.category || d.Category,
+                        value: d.totalAmount || d.TotalAmount
+                    }));
+                    $("#chart-category").kendoChart({
+                        series: [{ type: "donut", data: chartData, labels: { visible: true, position: "outsideEnd", template: "#= category #: ₹#= kendo.toString(value, 'n0') #" } }],
+                        legend: { position: "bottom" },
+                        tooltip: { visible: true, template: "#= category #: ₹#= value #" },
+                        chartArea: { background: "transparent" }
+                    });
+                });
+            }
+
+            function loadMonthlyTrend() {
+                $.getJSON("/AdminGraph/MonthlyExpenseTrend", function (data) {
+                    if (!data?.length) return;
+                    $("#chart-monthly").kendoChart({
+                        dataSource: { data: data },
+                        series: [{ type: "line", field: "totalAmount", categoryField: "month", color: "#2ECC71", name: "Monthly Expense" }],
+                        categoryAxis: { labels: { rotation: -45 } },
+                        tooltip: { visible: true, template: "₹#= value #" },
+                        chartArea: { background: "transparent" }
+                    });
+                });
+            }
+
+            function loadPaymentSummary() {
+                $.getJSON("/AdminGraph/PaymentModeSummary", function (data) {
+                    if (!data?.length) return;
+                    let chartData = data.map(d => ({ category: d.paymentMode, value: d.totalAmount }));
+                    $("#chart-payment").kendoChart({
+                        series: [{ type: "donut", data: chartData, labels: { visible: true, position: "outsideEnd", template: "#= category #: ₹#= kendo.toString(value, 'n0') #" } }],
+                        legend: { position: "bottom" },
+                        tooltip: { visible: true, template: "#= category #: ₹#= value #" },
+                        chartArea: { background: "transparent" }
+                    });
+                });
+            }
+
+            function loadTopUsers() {
+                $.getJSON("/AdminGraph/TopSpendingUsers", function (data) {
+                    if (!data?.length) return;
+                    $("#chart-users").kendoChart({
+                        dataSource: { data: data },
+                        series: [{ type: "bar", field: "totalSpent", categoryField: "name", color: "#2ECC71", labels: { visible: true, template: "₹#= value #" } }],
+                        tooltip: { visible: true, template: "#= category #: ₹#= value #" },
+                        chartArea: { background: "transparent" }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

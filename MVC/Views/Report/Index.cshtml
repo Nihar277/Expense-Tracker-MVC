@@ -1,0 +1,275 @@
+ @{
+ViewData["Title"] = "Expense Report";
+Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Custom Theme Styling (Admin Panel) -->
+<style>
+    body {
+        background-color: #f8fafc;
+    }
+
+    .report-container {
+        background-color: #ffffff;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+        font-weight: 700;
+        color: #0d1b2a;
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 25px;
+    }
+
+    h2::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 6px;
+        height: 28px;
+        border-radius: 4px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #0d1b2a;
+    }
+
+    .k-datepicker,
+    .k-dropdown {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 6px 10px;
+    }
+
+    .k-button {
+        border-radius: 25px !important;
+        font-weight: 600 !important;
+        padding: 6px 15px !important;
+        transition: all 0.2s ease;
+    }
+
+    .k-button.k-primary {
+        background-color: #f4a261 !important;
+        border-color: #f4a261 !important;
+        color: #0d1b2a !important;
+    }
+
+    .k-button.k-primary:hover {
+        background-color: #e59e3e !important;
+        color: white !important;
+    }
+
+    .k-button.k-secondary {
+        background-color: #3f51b5 !important;
+        color: white !important;
+        border-color: #3f51b5 !important;
+    }
+
+    .k-button.k-secondary:hover {
+        background-color: #2c3e9f !important;
+        color: white !important;
+    }
+
+    #grid .k-grid-header {
+        background-color: rgb(13, 117, 74) !important;
+        color: #ffffff !important;
+        font-weight: 700;
+    }
+
+    #grid .k-grid-content tr:hover {
+        background-color: #d5f5e3 !important;
+        cursor: pointer;
+    }
+
+    #grid .k-grid-content td {
+        vertical-align: middle;
+        padding: 8px 12px;
+    }
+
+    #grid .k-alt {
+        background-color: #f0f9f4;
+    }
+
+    .btn-group-flex {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="report-container">
+        <h2>Expense Report</h2>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label class="form-label">Quick Filter:</label>
+                <select id="timeSlicer" class="k-dropdown">
+                    <option value="">--Select--</option>
+                    <option value="LastMonth">Last Month</option>
+                    <option value="LastQuarter">Last Quarter</option>
+                    <option value="LastYear">Last Year</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Start Date:</label>
+                <input id="startDate" class="k-datepicker" placeholder="Select start date" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">End Date:</label>
+                <input id="endDate" class="k-datepicker" placeholder="Select end date" />
+            </div>
+
+            <div class="col-md-3 align-self-end">
+                <div class="btn-group-flex">
+                    <button id="btnGenerate" class="k-button k-primary">Generate Report</button>
+                    <button id="btnPrint" class="k-button k-secondary">Print Report</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            const today = new Date();
+
+            // Initialize Kendo date pickers
+            $("#startDate, #endDate").kendoDatePicker({
+                format: "yyyy-MM-dd",
+                max: today
+            });
+
+            $("#timeSlicer").change(function () {
+                $("#startDate, #endDate").each(function () {
+                    $(this).data("kendoDatePicker").value(null);
+                });
+                const slicer = $(this).val();
+                if (slicer) loadGrid({ slicer: slicer });
+            });
+
+            $("#startDate, #endDate").kendoDatePicker({
+                format: "yyyy-MM-dd",
+                value: null, // no date selected initially
+                month: {
+                    // Customize day rendering
+                    content:
+                        '# if (data.date > new Date()) { #' +
+                        '<span style="color:#bbb; filter:blur(0.8px); pointer-events:none;">#= data.value #</span>' +
+                        '# } else { #' +
+                        '<span>#= data.value #</span>' +
+                        '# } #'
+                },
+                disableDates: function (date) {
+                    // Disable all future dates
+                    return date > today;
+                }
+            });
+
+            $("#btnGenerate").click(function () {
+                const start = $("#startDate").val();
+                const end = $("#endDate").val();
+
+                if (!start || !end) {
+                    Swal.fire({ icon: 'warning', title: 'Missing Dates', text: 'Please select Quick Filter or Date Range.' });
+                    return;
+                }
+
+                if (new Date(start) > new Date(end)) {
+                    Swal.fire({ icon: 'error', title: 'Invalid Date Range', text: 'Start Date cannot be greater than End Date.' });
+                    return;
+                }
+
+                loadGrid({ start: start, end: end });
+            });
+
+            $("#btnPrint").click(function () {
+                const slicer = $("#timeSlicer").val();
+                const start = $("#startDate").val();
+                const end = $("#endDate").val();
+
+                if (!slicer && (!start || !end)) {
+                    Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Please select a filter or date range to print the report.' });
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Report/PrintReport',
+                    type: 'GET',
+                    data: { slicer, start, end },
+                    xhrFields: { responseType: 'blob' },
+                    success: function (data, status, xhr) {
+                        const filename = "ExpenseReport.pdf";
+                        const blob = new Blob([data], { type: 'application/pdf' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+
+                        Swal.fire({
+                            icon: 'success', title: 'Success', text: 'PDF report downloaded successfully.', timer: 150000, toast: true, position: 'top-end', showConfirmButton: false
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to generate PDF report.' });
+                    }
+                });
+            });
+
+            function loadGrid(params) {
+                $.ajax({
+                    url: '/Report/GetAggregatedReport',
+                    type: 'GET',
+                    data: params,
+                    success: function (data) {
+                        if (data?.Error) { Swal.fire({ icon: 'error', title: 'Error', text: data.Error }); return; }
+                        if (data?.Redirect) { window.location.href = data.Redirect; return; }
+
+                        const grid = $("#grid").data("kendoGrid");
+                        if (grid) grid.destroy();
+                        $("#grid").empty();
+
+                        $("#grid").kendoGrid({
+                            dataSource: { data: data || [], pageSize: 10 },
+                            pageable: { pageSizes: false, buttonCount: 5 },
+                            sortable: true,
+                            filterable: true,
+                            columns: [
+                                { field: "userId", title: "User ID", width: 100 },
+                                { field: "userName", title: "User Name", width: 150 },
+                                { field: "category", title: "Category", width: 150 },
+                                { field: "amount", title: "Amount (₹)", width: 120, template: "#= kendo.toString(amount,'n2') #" },
+                                { field: "paymentMode", title: "Payment Mode", width: 120 },
+                                { field: "transDate", title: "Date", width: 120 }
+                            ]
+                        });
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data Generated Successfully',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to fetch report data.' });
+                    }
+                });
+            }
+        });
+    </script>
+}

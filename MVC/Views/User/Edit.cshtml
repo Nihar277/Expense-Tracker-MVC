@@ -1,0 +1,356 @@
+@model MVC.Models.vm_UpdateProfile
+@{
+    ViewData["Title"] = "Update Profile";
+    Layout = "../Shared/_UserLayout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+/* Card styling */
+.update-profile-card {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    max-width: 600px;
+    width: 100%;
+}
+
+/* Input focus effect */
+.update-profile-card input[type="text"],
+.update-profile-card input[type="email"],
+.update-profile-card input[type="file"],
+.update-profile-card input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.update-profile-card input[type="text"]:focus,
+.update-profile-card input[type="email"]:focus,
+.update-profile-card input[type="file"]:focus {
+    border-color: #2ECC71;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Header */
+.card-header {
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+
+/* Labels and form */
+.form-group {
+    margin-bottom: 25px;
+}
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+    display: block;
+}
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+/* Radio button styling */
+.form-check-input {
+    cursor: pointer;
+    accent-color: #2ECC71;
+}
+.form-check-input:checked {
+    border-color: #2ECC71;
+    background-color: #2ECC71;
+}
+
+/* Upload area - modern look */
+.upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.upload-area.dragover {
+    border-color: #2ECC71;
+    background-color: rgba(46, 204, 113, 0.1);
+}
+.upload-area i {
+    font-size: 50px;
+    color: #2ECC71;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease;
+}
+.upload-area:hover i {
+    transform: scale(1.1);
+}
+.upload-area p {
+    color: #555;
+    font-size: 14px;
+    margin: 0;
+}
+#fileName {
+    font-size: 13px;
+    color: #555;
+    margin-top: 10px;
+}
+
+/* Preview container */
+.preview-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.preview-container img {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+    object-fit: cover;
+    background-color: #f8f8f8;
+    padding: 5px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.preview-container img:hover {
+    transform: scale(1.05);
+}
+.remove-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 13px;
+    margin-top: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.remove-btn:hover {
+    background: #c0392b;
+}
+
+/* Submit button */
+#updateProfileBtn {
+    width: 100%;
+    padding: 12px;
+    background-color: #2ECC71;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+#updateProfileBtn:hover {
+    background-color: #27ae60;
+}
+
+/* Error container */
+#formErrors {
+    margin-bottom: 20px;
+    color: #e74c3c;
+    font-weight: 500;
+}
+</style>
+
+<div class="d-flex flex-column align-items-center mt-5">
+    <div class="update-profile-card">
+
+        <!-- Header -->
+        <div class="card-header d-flex align-items-center mb-3">
+            <div class="me-3 p-3 text-white rounded-circle m-4" style="background-color: #2ECC71;">
+                <i class="fas fa-user m-2"></i>
+            </div>
+            <div>
+                <h4 class="mb-0">Update Profile</h4>
+                <small class="text-muted">Edit your personal details</small>
+            </div>
+        </div>
+
+        <!-- Error container -->
+        <div id="formErrors"></div>
+
+        <!-- Form -->
+        <form id="updateProfileForm" enctype="multipart/form-data">
+            <input type="hidden" name="UserID" value="@Model.UserID" />
+
+            <!-- Name -->
+            <div class="form-group">
+                <label for="Name">Name</label>
+                <input type="text" id="Name" name="Name" class="form-control" placeholder="Enter your name" value="@Model.Name" />
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="Email">Email</label>
+                <input type="email" id="Email" name="Email" class="form-control" value="@Model.Email" readonly />
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="Gender" id="genderMale" value="Male" @(Model.Gender == "Male" ? "checked" : "")>
+                        <label class="form-check-label" for="genderMale">Male</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="Gender" id="genderFemale" value="Female" @(Model.Gender == "Female" ? "checked" : "")>
+                        <label class="form-check-label" for="genderFemale">Female</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Image -->
+            <div class="form-group">
+                <label>Profile Image</label>
+                <div id="uploadArea" class="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop or click to upload image</p>
+                    <input type="file" id="ProfileImage" name="User_ProfileImage" accept="image/*" 
+                           style="opacity:0; width:100%; height:100%; position:absolute; top:0; left:0; cursor:pointer;" />
+                    <div id="fileName">@Model.ProfileImage</div>
+                </div>
+
+                <!-- Preview -->
+                <div class="preview-container text-center" id="previewContainer" style="display:@(!string.IsNullOrEmpty(Model.ProfileImage) ? "flex" : "none")">
+                    <img id="previewImage" src="@(!string.IsNullOrEmpty(Model.ProfileImage) ? "/profile_images/" + Model.ProfileImage : "")" alt="Profile Preview">
+                    <button type="button" class="remove-btn" id="removeImage">Remove</button>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button id="updateProfileBtn" type="button">Update Profile</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(document).ready(function(){
+
+    const uploadArea = $("#uploadArea");
+    const fileInput = $("#ProfileImage");
+    const fileNameDisplay = $("#fileName");
+    const previewContainer = $("#previewContainer");
+    const previewImage = $("#previewImage");
+
+    // Click upload area opens file dialog
+    uploadArea.on("click", function(){ fileInput.click(); });
+
+    // File selected
+    fileInput.on("change", function(e){
+        const file = e.target.files[0];
+        if(file) showPreview(file);
+    });
+
+    // Drag & drop
+    uploadArea.on("dragover", function(e){
+        e.preventDefault();
+        uploadArea.addClass("dragover");
+    });
+    uploadArea.on("dragleave drop", function(e){
+        e.preventDefault();
+        uploadArea.removeClass("dragover");
+    });
+    uploadArea.on("drop", function(e){
+        const file = e.originalEvent.dataTransfer.files[0];
+        if(file){
+            fileInput[0].files = e.originalEvent.dataTransfer.files;
+            showPreview(file);
+        }
+    });
+
+    function showPreview(file){
+        const reader = new FileReader();
+        reader.onload = function(e){
+            previewImage.attr("src", e.target.result);
+            previewContainer.show();
+            fileNameDisplay.text(file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Remove new image
+    $("#removeImage").on("click", function(e){
+        e.stopPropagation();
+        fileInput.val("");
+        previewContainer.hide();
+        fileNameDisplay.text("");
+    });
+
+    // Form submit
+    $("#updateProfileBtn").click(function(){
+        const name = $("#Name").val().trim();
+        const gender = $("input[name='Gender']:checked").val();
+        let errors = [];
+        if(!name) errors.push("Name is required.");
+        if(!gender) errors.push("Please select a gender.");
+
+        if(errors.length){
+            $("#formErrors").html(errors.join("<br>"));
+            return;
+        } else {
+            $("#formErrors").html("");
+        }
+
+        const formData = new FormData($("#updateProfileForm")[0]);
+        
+        $.ajax({
+            url: '/User/Edit',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res){
+                setTimeout(function(){
+                    window.location.href = '/User/UserGraph';
+                }, 1000);
+                Swal.fire({
+                    toast: true,
+                    icon: res.success ? 'success' : 'error',
+                    title: res.message,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+
+                });
+
+            },
+            error: function(){
+                Swal.fire({
+                    toast: true,
+                    icon: 'error',
+                    title: 'Something went wrong.',
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        });
+    });
+
+});
+</script>
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CashPoint</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/kendo/kendo.default-v2.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #b4daa7 0%, #4caf50 100%);
+        }
+    </style>
+</head>
+
+<body>
+    @* <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom shadow-sm mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold text-dark" asp-controller="Home" asp-action="Index">
+                    <img src="~/cashpoint_finallogo-removebg-preview.png" alt="Logo" height="45" class="me-2" />
+
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home"
+                                asp-action="Index">Home</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home"
+                                asp-action="Login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" asp-controller="User"
+                                asp-action="Register">Register</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header> *@
+
+    <div class=" container mt-4">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+    </div>
+
+    <footer class="border-top footer text-muted py-3">
+        <div class="container text-center">&copy; @DateTime.Now.Year - CashPoint</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/kendo/kendo.all.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

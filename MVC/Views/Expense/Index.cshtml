@@ -1,0 +1,440 @@
+@{
+    ViewData["Title"] = "Expenses";
+    Layout = "../Shared/_UserLayout.cshtml";
+}
+@model List<MVC.Models.t_transaction>
+
+<style>
+    /* Total Expense Box */
+    #totalExpenseBox {
+        background-color: #d0f0d0;
+        border-left: 6px solid #2ECC71;
+        color: #2E2E2E;
+        margin-bottom: 15px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    /* Add Button */
+    .btn.btn-primary {
+        background-color: #2ECC71;
+        border-color: #27AE60;
+        font-weight: bold;
+        color: white;
+    }
+
+    .btn.btn-primary:hover {
+        background-color: #27AE60;
+        color: white;
+    }
+
+    /* Kendo Grid Header */
+    .k-grid-header {
+        background-color: #2ECC71 !important;
+        color: white !important;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .k-grid th.k-header {
+        background-color: #2ECC71 !important;
+        color: white !important;
+        font-weight: bold;
+        border-bottom: 1px solid #27AE60;
+    }
+
+    /* Rounded border for entire table */
+    .k-grid {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e0e0e0;
+    }
+
+    /* Action Buttons */
+    .update-btn {
+        background-color: #2ECC71;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        margin-right: 5px;
+        border-radius: 4px;
+    }
+
+    .update-btn:hover {
+        background-color: #27AE60;
+        color: white;
+    }
+
+    .delete-btn {
+        background-color: #E74C3C;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .delete-btn:hover {
+        background-color: #C0392B;
+        color: white;
+    }
+
+    /* Modal Styling */
+    #updateModal {
+        background-color: #f0fff0; /* light greenish background */
+        border-radius: 12px;
+        padding: 25px 30px;
+        box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #2E2E2E;
+    }
+
+    /* Modal Title */
+    .k-window-title {
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: #27AE60;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #27AE60;
+    }
+
+    /* Form Field Labels */
+    .k-form-field label {
+        color: #27AE60;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* Input and Textarea */
+    textarea.k-textbox,
+    input.k-textbox,
+    input.k-numerictextbox,
+    .k-dropdown {
+        border: 1.5px solid #2ECC71;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    textarea.k-textbox:focus,
+    input.k-textbox:focus,
+    input.k-numerictextbox:focus,
+    .k-dropdown:focus {
+        border-color: #27AE60;
+        outline: none;
+        box-shadow: 0 0 8px #27AE60aa;
+    }
+
+    /* Upload Input */
+    input[type="file"] {
+        border: 1.5px solid #2ECC71;
+        border-radius: 6px;
+        padding: 6px;
+        font-size: 0.9rem;
+    }
+
+    /* Existing Receipt Image */
+    #existingImage {
+        max-width: 220px;
+        max-height: 120px;
+        border-radius: 8px;
+        border: 2px solid #27AE60;
+        padding: 5px;
+        box-shadow: 0 0 10px #2ECC7177;
+    }
+
+    /* Submit Button */
+    .k-button.k-primary {
+        background-color: #2ECC71 !important;
+        border-color: #27AE60 !important;
+        font-weight: 600;
+        padding: 10px 20px;
+        font-size: 0.8rem;
+        color: white;
+        transition: background-color 0.3s ease;
+        border-radius: 5px;
+    }
+
+    .k-button.k-primary:hover {
+        background-color: #27AE60 !important;
+        border-color: #229954 !important;
+    }
+
+    /* Align form fields nicely */
+    
+
+    /* Responsive modal */
+    @* @media (max-width: 600px) {
+        #updateModal {
+            width: 90% !important;
+            padding: 20px 15px;
+        }
+    } *@
+
+    .k-grid td {
+        color: #2E2E2E;
+    }
+</style>
+
+<div id="totalExpenseBox">
+    Total Expense: <span id="totalExpenseValue">Loading...</span>
+</div>
+
+<a class="btn btn-primary" asp-action="addExpense" asp-controller="Expense">Add Expense</a>
+<br /><br />
+
+<div id="expenseGrid"></div>
+
+<div id="updateModal" style="display:none;">
+    <form id="updateForm" enctype="multipart/form-data">
+        <input type="hidden" id="TransID" name="TransID" />
+
+        <div class="k-form-field">
+            <label>Category</label>
+            <input id="Category" name="Category" style="width:100%;" required />
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <label>Amount</label>
+            <input id="Amount" name="Amount" required />
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <label>Date</label>
+            <input type="date" id="TransDate" name="TransDate" required class="k-textbox" style="width:100%;" />
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <label>Payment Mode</label>
+            <input id="PaymentMode" name="PaymentMode" style="width:100%;" required />
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <label>Description</label>
+            <textarea id="Description" name="Description" class="k-textbox" style="width:100%;"></textarea>
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <label>Upload New Receipt (optional)</label>
+            <input type="file" id="transaction_ReceiptImage" name="transaction_ReceiptImage" />
+        </div>
+        <br />
+
+        <div class="k-form-field">
+            <img id="existingImage" src="" style="max-width:200px; display:none; border-radius:6px; border:1px solid #ccc; padding:4px;" />
+        </div>
+        <br />
+
+        <div class="k-form-field" style="text-align:right;">
+            <button type="submit" class="k-button k-primary">Update Expense</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function () {
+        $("#expenseGrid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Expense/GetAllExpense",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            transID: { type: "number" },
+                            category: { type: "string" },
+                            amount: { type: "float" },
+                            transDate: { type: "date" },
+                            paymentMode: { type: "string" },
+                            receiptImage: { type: "string" },
+                            description: { type: "string" }
+                        }
+                    }
+                },
+                pageSize: 10
+            },
+            sortable: true,
+            filterable: true,
+            pageable: true,
+            toolbar: ["search"],
+            columns: [
+                { field: "transID", title: "ID", width: "70px" },
+                { field: "category", title: "Category" },
+                {
+                    field: "amount", title: "Amount", width: "100px",
+                    template: function (dataItem) {
+                        return "₹ " + kendo.toString(dataItem.amount, "n2");
+                    }
+                },
+                { field: "transDate", title: "Date", format: "{0:MM/dd/yyyy}", width: "120px" },
+                { field: "paymentMode", title: "Payment Mode" },
+                {
+                    field: "receiptImage", title: "Receipt",
+                    template: function (dataItem) {
+                        if (dataItem.receiptImage) {
+                            return "<img src='" + dataItem.receiptImage + "' alt='Receipt' style='max-width:120px; max-height:70px; border-radius:5px;' />";
+                        }
+                        return "No Image";
+                    }
+                },
+                { field: "description", title: "Description" },
+                {
+                    title: "Action", width: "180px",
+                    template: `
+                        <button type='button' class='btn btn-sm update-btn'>Update</button>
+                        <button type='button' class='btn btn-sm delete-btn' data-id='#= transID #'>Delete</button>
+                    `
+                }
+            ]
+        });
+
+        // Dropdowns
+        $("#Category").kendoDropDownList({
+            optionLabel: "Select Category...",
+            dataSource: ["Food", "Travel", "Utilities", "Entertainment", "Salary", "Shopping", "Others"]
+        });
+
+        $("#PaymentMode").kendoDropDownList({
+            optionLabel: "Select Payment Mode...",
+            dataSource: ["Cash", "Card", "UPI", "Bank Transfer"]
+        });
+
+        $("#Amount").kendoNumericTextBox({
+            min: 0,
+            format: "n2",
+            decimals: 2
+        });
+
+        var updateWindow = $("#updateModal").kendoWindow({
+            title: "Update Expense",
+            modal: true,
+            visible: false,
+            width: "500px",
+            resizable: false
+        }).data("kendoWindow");
+
+        // Delete Button
+        $(document).on("click", ".delete-btn", function () {
+            var transID = $(this).data("id");
+            if (confirm("Are you sure you want to delete this expense?")) {
+                $.ajax({
+                    url: "/Expense/Delete/" + transID,
+                    type: "POST",
+                    success: function () {
+                        alert("Deleted successfully.");
+                        $("#expenseGrid").data("kendoGrid").dataSource.read();
+                        loadTotalExpense(); // Refresh total expense after deletion
+                    },
+                    error: function (xhr) {
+                        alert("Error deleting expense: " + xhr.responseText);
+                    }
+                });
+            }
+        });
+
+        // Update Button
+        $(document).on("click", ".update-btn", function () {
+            var transID = $(this).closest("tr").find("td:first").text();
+            $.get("/Expense/GetExpenseById", { id: transID }, function (res) {
+                if (res.success) {
+                    var data = res.data;
+                    $("#TransID").val(data.transID);
+                    $("#Category").data("kendoDropDownList").value(data.category);
+                    $("#Amount").data("kendoNumericTextBox").value(data.amount);
+                    $("#TransDate").attr("max", new Date().toISOString().split("T")[0]);
+                    $("#TransDate").val(data.transDate.split("T")[0]);
+                    $("#PaymentMode").data("kendoDropDownList").value(data.paymentMode);
+                    $("#Description").val(data.description);
+
+                    if (data.receiptImage) {
+                        $("#existingImage").attr("src", data.receiptImage).show();
+                    } else {
+                        $("#existingImage").hide();
+                    }
+                    updateWindow.center().open();
+                } else {
+                    alert(res.message);
+                }
+            });
+        });
+
+        // Submit Update Form
+        $("#updateForm").on("submit", function (e) {
+            e.preventDefault();
+            const category = $("#Category").val();
+            const payment = $("#PaymentMode").val();
+            const amount = $("#Amount").data("kendoNumericTextBox").value();
+            const dateVal = $("#TransDate").val();
+            const maxDate = new Date().toISOString().split("T")[0];
+
+            if (!category || !payment || !amount) {
+                alert("Please fill all required fields.");
+                return;
+            }
+
+            if (amount < 1 || amount >= 100000) {
+                alert("Amount should be at least ₹1 and less than ₹1,00,000.");
+                return;
+            }
+
+            if (dateVal > maxDate) {
+                alert("Date cannot be in the future.");
+                return;
+            }
+
+            var formData = new FormData(this);
+            $.ajax({
+                url: "/Expense/UpdateExpense",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.success) {
+                        alert("Expense updated successfully!");
+                        updateWindow.close();
+                        $("#expenseGrid").data("kendoGrid").dataSource.read();
+                        loadTotalExpense(); // Refresh total expense after update
+                    } else {
+                        alert(res.message);
+                    }
+                },
+                error: function (xhr) {
+                    alert("Error: " + xhr.responseText);
+                }
+            });
+        });
+
+        // Load total expense function
+        function loadTotalExpense() {
+            var userdata=sessionStorage.getItem("UserData");
+            var userid=JSON.parse(userdata).UserID;
+            $.ajax({
+                url: '/Expense/totalExpense/'+userid, // Make sure this URL is correct & returns a number
+                type: 'GET',
+                success: function (result) {
+                    let formatted = kendo.toString(result);
+                    $("#totalExpenseValue").text("₹ " + formatted);
+                },
+                error: function () {
+                    $("#totalExpenseValue").text("Error");
+                }
+            });
+        }
+
+        // Initial load of total expense
+        loadTotalExpense();
+    });
+</script>
+}

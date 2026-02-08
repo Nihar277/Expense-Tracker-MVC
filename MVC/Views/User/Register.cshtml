@@ -1,0 +1,358 @@
+@{
+    Layout = "../Shared/_LoginLayout.cshtml";
+}
+@model MVC.Models.vm_Login
+
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        /* Prevent scrolling */
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    .login-wrapper {
+        display: flex;
+        height: 100vh;
+        width: 100%;
+    }
+
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        /* Prevent scrolling */
+    }
+
+    .login-wrapper {
+        display: flex;
+        height: 100vh;
+        /* full viewport height */
+        width: 100%;
+    }
+
+    .login-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem;
+
+        color: rgb(66, 42, 42);
+        overflow: hidden;
+        /* prevent internal scroll */
+    }
+
+    @* .login-leftt {
+
+        background: linear-gradient(135deg, #b4daa7 0%, #4caf50 100%);
+
+
+    } *@
+
+    .login-left img {
+        max-width: 70%;
+        height: auto;
+    }
+
+    /* Right side - Form card */
+    .login-right {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem;
+        overflow: hidden;
+    }
+
+    .login-right .card {
+        width: 100%;
+        max-width: 450px;
+        border-radius: 15px;
+        border: 1px solid #27ae60;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        background-color: rgb(26, 135, 84);
+        color: white;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding: 1rem;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+
+    .k-button,
+    #registerBtn {
+        background-color: rgb(26, 135, 84);
+        border: none;
+        width: 100%;
+        font-weight: 700;
+        border-radius: 8px;
+    }
+
+    .login-right .form-control {
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #27ae60;
+    }
+
+    .login-right .form-group label {
+        font-weight: 500;
+    }
+
+    .text-center a {
+        color: #27ae60;
+        font-weight: bold;
+        text-decoration: none;
+    }
+</style>
+
+<div class="login-wrapper">
+    <!-- Left Side -->
+    <div class="login-left">
+        <img src="~/cashpoint_finallogo-removebg-preview.png" alt="Finance Illustration" class="img-fluid">
+        <h1 class="display-4 fw-bold mb-3 text-center">Welcome to CashPoint</h1>
+        <p class="lead mb-3  text-center" style="color: rgb(66, 42, 42);">
+            Manage your expenses efficiently, track your spending, and get insights at your fingertips.
+        </p>
+
+    </div>
+    <!-- Right Side -->
+    <div class="login-right">
+        <div class="card shadow-lg">
+            <div class="card-header">
+                Register
+            </div>
+            <div class="card-body p-4">
+                <div id="notification"></div>
+                <form id="registerFrm" enctype="multipart/form-data">
+                    <!-- Form fields rendered by Kendo Form JS -->
+                </form>
+            </div>
+            <div class="text-center mb-3">
+                <p class="text-muted mb-0">Already have an account?
+                    <a href='@Url.Action("Login", "Home")' class="fw-bold text-decoration-none text-success">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+
+            $("#male").attr("checked", true);
+            $("#notification").kendoNotification({
+
+                allowHideAfter: 3000,
+                appendTo: "#registerFrm",
+                stacking: "up"
+            });
+
+            $("#registerFrm").kendoForm({
+                validatable: {
+                    validateOnBlur: true,
+                    validationSummary: false,
+                                                @* errorTemplate: `<span id="regError">#:message#</span>` *@
+                                            },
+            items: [
+            { field: "Name", label: "Name", validation: { required: { message: "Name is required." } } },
+            {
+                field: "Email", label: "Email", validation: {
+                    required: {
+                        message: "Email is required."
+                    },
+                    email: {
+                        message: "Enter valid email."
+                    }
+                }
+            },
+            {
+                field: "Password", label: "Password", validation: {
+                    required: {
+                        message: "Password is required."
+                    }
+                },
+                editor: function (container, options) {
+
+                    $('<input id="Password" type="password" name="' + options.field + '" title="Password" required/>')
+                        .appendTo(container).kendoTextBox();
+
+                }
+
+            },
+
+            {
+                field: "ConfirmPassword", label: "ConfirmPassword", validation: {
+                    required: {
+                        message: "Confirm Password is required.",
+                        equalTo: {
+                            message: "Passwords do not match.",
+                            param: "#Password"
+                        }
+                    }
+                },
+                editor: function (container, options) {
+                    $('<input type="password" id="ConfirmPassword" name="' + options.field + '" title="ConfirmPassword" required    />')
+                        .appendTo(container)
+                        .kendoTextBox();
+                }
+
+            },
+            {
+                field: "Gender",
+                label: "Gender",
+                validation: { required: { message: "Select your gender." } },
+                editor: function (container, options) {
+
+                    const fieldName = options.field;
+
+                    // Append radio group
+                    const radioGroupHtml = `
+                                        <div class="gender-radio-group">
+                                            <label><input type="radio" name="gender" id="male" value="Male" /> Male</label>&nbsp;
+                                            <label><input type="radio" name="gender"  id="female" value="Female" /> Female</label>&nbsp;
+                                            <label><input type="radio" name="gender"  id="other" value="Other" /> Other</label>
+                                            <input type="hidden" name="${fieldName}" data-bind="value:${fieldName}" required />
+                                        </div>
+                                    `;
+
+                    $(radioGroupHtml).appendTo(container);
+
+                    // Update hidden input when any radio is selected
+                    container.find(`input[type=radio][name="gender"]`).on("change", function () {
+                        const selectedValue = $(this).val();
+                        container.find(`input[type=hidden][name="${fieldName}"]`).val(selectedValue).trigger("change");
+                    });
+
+                    $("#male").kendoRadioButton({});
+                    $("#female").kendoRadioButton({});
+                    $("#other").kendoRadioButton({});
+
+
+
+                }
+            },
+            {
+                field: "User_ProfileImage",
+                label: "Profile Image",
+                editor: function (container, options) {
+
+                    $(`<input type="file" id="User_ProfileImage" name="${options.field}" />`)
+                        .appendTo(container)
+                        .kendoUpload({
+                            multiple: false
+                        });
+                }
+            }
+
+        ],
+            buttonsTemplate: `<button type="submit" class="k-button k-button-lg k-button-solid-primary" id="registerBtn">Register</button>`,
+            submit: function (e) {
+                console.log($("input[name='Gender']"));
+                e.preventDefault();
+                var formData = new FormData($("#registerFrm")[0]);
+                formData.append("Status", "InActive");
+                formData.append("Role", "user");
+                formData.forEach((k, v) => {
+                    console.log(k + " --- " + v);
+                });
+
+                $.ajax({
+                    url: "/User/Register",
+                    type: "POST",
+                    contentType: false,
+                    processData: false,
+                    data: formData,
+                    success: function (result) {
+                        console.log(result)
+                        if (result.success) {
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: result.message,
+                                confirmButtonColor: '#3085d6',
+                            }).then(() => {
+                                $("#registerFrm")[0].reset();
+                                window.location = "/Home/Login";
+                            });
+
+                            @* $("#notification").getKendoNotification().show(result.message, "success"); *@
+                                @* setTimeout(function () {
+                                    $("#registerFrm")[0].reset();
+                                    window.location = "/Home/Login";
+                                }, 1500) *@
+
+                                                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: result.message,
+                                confirmButtonColor: '#d33',
+                            });
+                            @* $("#notification").getKendoNotification().show(result.message, "error"); *@
+                                                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: err.responseJSON.message,
+                            confirmButtonColor: '#d33',
+                        });
+                        @* $("#notification").getKendoNotification().show(err.responseJSON.message, "error"); *@
+                                                    }
+                });
+
+            }
+                                        });
+
+
+        var validator = $("#registerFrm").kendoValidator({
+            rules: {
+
+                alphanumericrule: function (input) {
+                    if (input.is("[name='Name']")) {
+                        return /^[a-zA-Z\s]+$/.test(input.val().trim());
+                    }
+                    return true;
+                },
+                passwordValid: function (input) {
+                    if (input.is("[name='Password']")) {
+                        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(input.val());
+                    }
+                    return true;
+                },
+                ConfirmpasswordValid: function (input) {
+                    if (input.is("[name='ConfirmPassword']")) {
+                        return input.val() == $("[name='Password']").val();
+                    }
+                    return true;
+                },
+
+            }, messages: {
+                alphanumericrule: "Enter valid Name.",
+                passwordValid: "Password contains at least 8 characters and uppercase, lowercase, special character and number.",
+                ConfirmpasswordValid: "Password must match."
+            }
+        }).data("kendoValidator");
+
+                                    });
+    </script>
+}

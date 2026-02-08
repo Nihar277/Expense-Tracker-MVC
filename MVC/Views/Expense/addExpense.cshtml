@@ -1,0 +1,175 @@
+@{
+    ViewData["Title"] = "Add Expense";
+    Layout = "../Shared/_UserLayout.cshtml";
+}
+
+<style>
+    /* Card style with light green background */
+    .card {
+        background-color: #d0f0d0; /* light green */
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Optional: label asterisks in red */
+    label > span.required {
+        color: red;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="card">
+        <h3>Add New Expense</h3>
+
+        <form id="expenseForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="transDate">Date <span class="required">*</span></label>
+                <input id="transDate" name="TransDate" required data-required-msg="Date is required." />
+            </div>
+
+            <div class="mb-3">
+                <label for="category">Category <span class="required">*</span></label>
+                <input id="category" name="Category" required data-required-msg="Category is required." />
+            </div>
+
+            <div class="mb-3">
+                <label for="amount">Amount <span class="required">*</span></label>
+                <input id="amount" name="Amount" required data-required-msg="Amount is required." />
+                <span class="k-invalid-msg" data-for="Amount"></span>
+            </div>
+
+            <div class="mb-3">
+                <label for="paymentMode">Payment Mode <span class="required">*</span></label>
+                <input id="paymentMode" name="PaymentMode" required data-required-msg="Payment Mode is required." />
+            </div>
+
+            <div class="mb-3">
+                <label for="transaction_ReceiptImage">Receipt Upload (optional)</label>
+                <input id="transaction_ReceiptImage" name="transaction_ReceiptImage" type="file" />
+            </div>
+
+            <div class="mb-3">
+                <label for="description">Description (optional)</label>
+                <textarea id="description" name="Description"></textarea>
+            </div>
+
+            <button id="btnAdd" class="k-button k-primary">Add Expense</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts{
+<script>
+$(document).ready(function () {
+    var validator = $("#expenseForm").kendoValidator({
+        rules: {
+            notFutureDate: function(input) {
+                if (input.is("[name='TransDate']") && input.val()) {
+                    var picker = $("#transDate").data("kendoDateTimePicker");
+                    if (!picker) return true;
+
+                    var selectedDate = picker.value();
+                    if (!selectedDate) return true;
+
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    selectedDate.setHours(0, 0, 0, 0);
+
+                    return selectedDate <= today;
+                }
+                return true;
+            }
+        },
+        messages: {
+            notFutureDate: "Date cannot be in the future."
+        }
+    }).data("kendoValidator");
+
+    $("#transDate").kendoDateTimePicker({
+        value: new Date(),
+        format: "yyyy-MM-dd",
+        max: new Date(),
+        parseFormats: ["yyyy-MM-dd", "yyyy/MM/dd", "MM/dd/yyyy", "dd/MM/yyyy"]
+    });
+
+    $("#category").kendoDropDownList({
+        optionLabel: "Select category...",
+        dataSource: [
+            "Food", "Travel", "Utilities", "Entertainment", "Salary", "Shopping", "Others"
+        ]
+    });
+
+    $("#amount").kendoNumericTextBox({
+        min: 0,
+        step: 10,
+        format: "n2",
+        spinners: false
+    });
+
+    $("#paymentMode").kendoDropDownList({
+        optionLabel: "Select payment mode...",
+        dataSource: [
+            "Cash", "Card", "UPI", "Bank Transfer"
+        ]
+    });
+
+    $("#transaction_ReceiptImage").kendoUpload({
+        multiple: false
+    });
+
+    $("#description").kendoTextArea({
+        rows: 4,
+        placeholder: "Enter description..."
+    });
+
+    $("#btnAdd").kendoButton({
+        click: function (e) {
+            e.preventDefault();
+
+            if (validator.validate()) {
+                saveExpense();
+            } else {
+                console.log("Validation failed.");
+            }
+        }
+    });
+
+    function saveExpense() {
+        var form = document.getElementById("expenseForm");
+        var formData = new FormData(form);
+
+        // Convert date to ISO string
+        var dateVal = $("#transDate").data("kendoDateTimePicker").value();
+        if (dateVal) {
+            formData.set("TransDate", dateVal.toISOString());
+        }
+
+        $.ajax({
+            url: '/Expense/Create',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (resp) {
+                if (resp.success) {
+                    alert("Expense added successfully!");
+                    $("#expenseForm")[0].reset();
+
+                    // Redirect after a small delay to ensure form reset is processed
+                    setTimeout(function() {
+                        window.location.href = "/Expense/Index";
+                    }, 1000);
+                } else {
+                    alert("Error: " + resp.message);
+                }
+            },
+            error: function (xhr) {
+                alert("Server Error: " + xhr.responseText);
+            }
+        });
+    }
+});
+</script>
+}
